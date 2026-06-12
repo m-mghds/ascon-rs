@@ -1,5 +1,7 @@
 # ASCON-Rust
 
+![CI](https://github.com/m-mghds/ascon-rs/actions/workflows/ci.yml/badge.svg)
+
 A `no_std` Rust implementation of **Ascon-AEAD128**, focusing on a clean, educational, allocation-free, and constrained-device-friendly design.
 
 ## Current Status
