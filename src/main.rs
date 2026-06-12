@@ -28,26 +28,13 @@ fn run_default_demo() {
 
     let mut ciphertext = vec![0u8; plaintext.len()];
 
-    let tag = aead::encrypt(
-        &key,
-        &nonce,
-        ad,
-        plaintext,
-        &mut ciphertext,
-    )
-    .expect("encryption failed");
+    let tag =
+        aead::encrypt(&key, &nonce, ad, plaintext, &mut ciphertext).expect("encryption failed");
 
     let mut recovered = vec![0u8; ciphertext.len()];
 
-    aead::decrypt(
-        &key,
-        &nonce,
-        ad,
-        &ciphertext,
-        &tag,
-        &mut recovered,
-    )
-    .expect("authentication failed");
+    aead::decrypt(&key, &nonce, ad, &ciphertext, &tag, &mut recovered)
+        .expect("authentication failed");
 
     println!("\nPlaintext:");
     println!("{}", String::from_utf8_lossy(plaintext));
@@ -110,13 +97,7 @@ fn run_custom_encrypt() {
     let key = Key::from_bytes(key_bytes);
     let mut ciphertext = vec![0u8; plaintext.len()];
 
-    let tag = match aead::encrypt(
-        &key,
-        &nonce,
-        &ad,
-        &plaintext,
-        &mut ciphertext,
-    ) {
+    let tag = match aead::encrypt(&key, &nonce, &ad, &plaintext, &mut ciphertext) {
         Ok(tag) => tag,
         Err(e) => {
             println!("Encryption failed: {:?}", e);
@@ -185,14 +166,7 @@ fn run_custom_decrypt() {
     let key = Key::from_bytes(key_bytes);
     let mut plaintext = vec![0u8; ciphertext.len()];
 
-    let result = aead::decrypt(
-        &key,
-        &nonce,
-        &ad,
-        &ciphertext,
-        &tag,
-        &mut plaintext,
-    );
+    let result = aead::decrypt(&key, &nonce, &ad, &ciphertext, &tag, &mut plaintext);
 
     match result {
         Ok(()) => {
@@ -250,10 +224,7 @@ fn parse_hex_array<const N: usize>(input: &str) -> Result<[u8; N], String> {
     let bytes = parse_hex(input)?;
 
     if bytes.len() != N {
-        return Err(format!(
-            "expected {N} bytes, got {} bytes",
-            bytes.len()
-        ));
+        return Err(format!("expected {N} bytes, got {} bytes", bytes.len()));
     }
 
     let mut out = [0u8; N];
