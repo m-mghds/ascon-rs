@@ -2,8 +2,10 @@
 name = "ascon-rs"
 version = "0.1.0"
 edition = "2021"
-description = "A no_std implementation of Ascon-AEAD128 (NIST SP 800-232)"
+description = "no_std implementation of Ascon-AEAD128 (NIST SP 800-232)"
 license = "MIT"
 readme = "README.md"
+keywords = ["ascon", "aead", "cryptography", "no-std", "embedded"]
+categories = ["cryptography", "no-std"]
 
 [dependencies]
