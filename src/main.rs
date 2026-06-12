@@ -204,7 +204,7 @@ fn parse_hex(input: &str) -> Result<Vec<u8>, String> {
         return Ok(Vec::new());
     }
 
-    if clean.len() % 2 != 0 {
+    if !clean.len().is_multiple_of(2) {
         return Err("hex string must have an even number of characters".to_string());
     }
 

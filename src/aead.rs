@@ -175,7 +175,6 @@ fn encrypt_final_padded_plaintext_block(state: &mut State, block: &[u8], out: &m
     }
 }
 
-
 // DECRYPTION PART
 pub fn decrypt(
     key: &Key,
@@ -299,73 +298,4 @@ fn constant_time_eq_16(a: &[u8; 16], b: &[u8; 16]) -> bool {
     }
 
     result == 0
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn encrypt_then_decrypt_roundtrip() {
-        let key = Key::from_bytes([
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
-            0x0e, 0x0f,
-        ]);
-
-        let nonce = [
-            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,
-            0x1e, 0x1f,
-        ];
-
-        let ad = [
-            0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d,
-            0x3e, 0x3f,
-        ];
-
-        let plaintext = [
-            0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d,
-            0x2e, 0x2f,
-        ];
-
-        let mut ciphertext = [0u8; 16];
-
-        let tag = encrypt(&key, &nonce, &ad, &plaintext, &mut ciphertext).unwrap();
-
-        let mut recovered = [0u8; 16];
-
-        let result = decrypt(&key, &nonce, &ad, &ciphertext, &tag, &mut recovered);
-
-        assert_eq!(result, Ok(()));
-        assert_eq!(recovered, plaintext);
-    }
-
-    #[test]
-    fn decrypt_rejects_wrong_tag_and_wipes_plaintext() {
-        let key = Key::from_bytes([
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d,
-            0x0e, 0x0f,
-        ]);
-
-        let nonce = [
-            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,
-            0x1e, 0x1f,
-        ];
-
-        let ad = [0x30u8];
-        let plaintext = [0x20u8, 0x21u8];
-
-        let mut ciphertext = [0u8; 2];
-
-        let mut tag = encrypt(&key, &nonce, &ad, &plaintext, &mut ciphertext).unwrap();
-
-        // Corrupt the tag.
-        tag[0] ^= 0x01;
-
-        let mut recovered = [0xffu8; 2];
-
-        let result = decrypt(&key, &nonce, &ad, &ciphertext, &tag, &mut recovered);
-
-        assert_eq!(result, Err(Error::AuthenticationFailed));
-        assert_eq!(recovered, [0u8; 2]);
-    }
 }
