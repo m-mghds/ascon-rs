@@ -24,10 +24,10 @@ Implemented:
 * Encryption and decryption checked against known-answer test vectors
 * Interactive demo binary for default and custom hex-based encryption/decryption tests
 * Ascon-Hash256
+* Ascon-XOF128
 
 Not implemented yet:
 
-* Ascon-XOF128
 * Extended test suite
 * External security audit
 
