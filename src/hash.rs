@@ -4,6 +4,13 @@ use crate::state::State;
 const HASH_RATE: usize = 8;
 const ASCON_HASH256_IV: u64 = 0x0000_0801_00cc_0002;
 const ASCON_XOF128_IV: u64 = 0x0000_0800_00cc_0003;
+const ASCON_CXOF128_IV: u64 = 0x0000_0800_00cc_0004;
+const MAX_CUSTOMIZATION_LEN: usize = 256;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Error {
+    CustomizationTooLong,
+}
 
 //Ascon-hash256
 pub fn hash256(message: &[u8]) -> [u8; 32] {
@@ -24,6 +31,21 @@ pub fn xof128(message: &[u8], output: &mut [u8]) {
     absorb_message(&mut state, message);
 
     squeeze(&mut state, output);
+}
+
+//Ascon-cxof128
+pub fn cxof128(customization: &[u8], message: &[u8], output: &mut [u8]) -> Result<(), Error> {
+    if customization.len() > MAX_CUSTOMIZATION_LEN {
+        return Err(Error::CustomizationTooLong);
+    }
+
+    let mut state = init_state(ASCON_CXOF128_IV);
+
+    absorb_customization(&mut state, customization);
+    absorb_message(&mut state, message);
+
+    squeeze(&mut state, output);
+    Ok(())
 }
 
 fn init_state(iv: u64) -> State {
@@ -50,6 +72,15 @@ fn absorb_message(state: &mut State, message: &[u8]) {
     state.word_mut()[0] ^= pad(remaining.len());
 
     p12(state);
+}
+
+fn absorb_customization(state: &mut State, customization: &[u8]) {
+    let customization_len_bits = (customization.len() as u64) * 8;
+
+    state.word_mut()[0] ^= customization_len_bits;
+    p12(state);
+
+    absorb_message(state, customization);
 }
 
 fn squeeze(state: &mut State, output: &mut [u8]) {

@@ -17,7 +17,7 @@ fn main() {
         "1" => run_aead_menu(),
         "2" => run_hash_menu(),
         "3" => run_xof_menu(),
-        "4" => run_cxof_todo(),
+        "4" => run_cxof_menu(),
         _ => println!("Invalid option."),
     }
 }
@@ -374,9 +374,105 @@ fn run_custom_xof() {
     print_hex(&output);
 }
 
-fn run_cxof_todo() {
-    println!("\nASCON-CXOF128 is not implemented yet.");
-    println!("TODO: implement cxof128_into(customization, message, output).");
+fn run_cxof_menu() {
+    println!("\nASCON-CXOF128 Demo");
+    println!("1) Default CXOF demo");
+    println!("2) CXOF custom message");
+
+    let choice = read_line("Select option: ");
+
+    match choice.trim() {
+        "1" => run_default_cxof_demo(),
+        "2" => run_custom_cxof(),
+        _ => println!("Invalid option."),
+    }
+}
+
+fn run_default_cxof_demo() {
+    let customization = b"demo customization";
+    let message = b"Hello, Ascon-CXOF128!";
+    let mut output = [0u8; 32];
+
+    let result = hash::cxof128(customization, message, &mut output);
+
+    match result {
+        Ok(()) => {
+            println!("\nCustomization:");
+            println!("{}", String::from_utf8_lossy(customization));
+
+            println!("\nMessage:");
+            println!("{}", String::from_utf8_lossy(message));
+
+            println!("\nOutput length: {} bytes", output.len());
+
+            println!("\nCXOF output:");
+            print_hex(&output);
+        }
+        Err(e) => {
+            println!("CXOF failed: {:?}", e);
+        }
+    }
+}
+
+fn run_custom_cxof() {
+    let customization = match read_bytes_input("Customization") {
+        Ok(v) => v,
+        Err(e) => {
+            println!("Invalid customization: {e}");
+            return;
+        }
+    };
+
+    let message = match read_bytes_input("Message") {
+        Ok(v) => v,
+        Err(e) => {
+            println!("Invalid message: {e}");
+            return;
+        }
+    };
+
+    let output_len_input = read_line("Output length in bytes: ");
+
+    let output_len: usize = match output_len_input.parse() {
+        Ok(v) => v,
+        Err(_) => {
+            println!("Invalid output length.");
+            return;
+        }
+    };
+
+    let mut output = vec![0u8; output_len];
+
+    let result = hash::cxof128(&customization, &message, &mut output);
+
+    match result {
+        Ok(()) => {
+            println!("\nCustomization length: {} bytes", customization.len());
+
+            println!("\nCustomization hex:");
+            print_hex(&customization);
+
+            println!("\nCustomization as UTF-8, if readable:");
+            println!("{}", String::from_utf8_lossy(&customization));
+
+            println!("\nMessage length: {} bytes", message.len());
+
+            println!("\nMessage hex:");
+            print_hex(&message);
+
+            println!("\nMessage as UTF-8, if readable:");
+            println!("{}", String::from_utf8_lossy(&message));
+
+            println!("\nOutput length: {} bytes", output.len());
+
+            println!("\nCXOF output:");
+            print_hex(&output);
+        }
+        Err(e) => {
+            println!("\nCXOF failed: {:?}", e);
+            println!("Possible reason: customization string is too long.");
+        }
+    }
 }
 
 fn read_bytes_input(name: &str) -> Result<Vec<u8>, String> {
