@@ -1,10 +1,29 @@
 use ascon_rs::aead;
+use ascon_rs::hash;
 use ascon_rs::key::Key;
 
 use std::io::{self, Write};
 
 fn main() {
-    println!("ASCON-AEAD128 Demo");
+    println!("ASCON Demo");
+    println!("1) ASCON AEAD");
+    println!("2) ASCON HASH");
+    println!("3) ASCON XOF");
+    println!("4) ASCON CXOF");
+
+    let choice = read_line("Select option: ");
+
+    match choice.trim() {
+        "1" => run_aead_menu(),
+        "2" => run_hash_menu(),
+        "3" => run_xof_todo(),
+        "4" => run_cxof_todo(),
+        _ => println!("Invalid option."),
+    }
+}
+
+fn run_aead_menu() {
+    println!("\nASCON-AEAD128 Demo");
     println!("1) Default encrypt/decrypt demo");
     println!("2) Encrypt custom input");
     println!("3) Decrypt custom input");
@@ -59,8 +78,6 @@ fn run_default_demo() {
 fn run_custom_encrypt() {
     let key_hex = read_line("Key hex, 16 bytes / 32 hex chars: ");
     let nonce_hex = read_line("Nonce hex, 16 bytes / 32 hex chars: ");
-    let ad_hex = read_line("AD hex, can be empty: ");
-    let pt_hex = read_line("Plaintext hex, can be empty: ");
 
     let key_bytes = match parse_hex_array::<16>(&key_hex) {
         Ok(v) => v,
@@ -78,7 +95,7 @@ fn run_custom_encrypt() {
         }
     };
 
-    let ad = match parse_hex(&ad_hex) {
+    let ad = match read_bytes_input("AD") {
         Ok(v) => v,
         Err(e) => {
             println!("Invalid AD: {e}");
@@ -86,7 +103,7 @@ fn run_custom_encrypt() {
         }
     };
 
-    let plaintext = match parse_hex(&pt_hex) {
+    let plaintext = match read_bytes_input("Plaintext") {
         Ok(v) => v,
         Err(e) => {
             println!("Invalid plaintext: {e}");
@@ -119,7 +136,6 @@ fn run_custom_encrypt() {
 fn run_custom_decrypt() {
     let key_hex = read_line("Key hex, 16 bytes / 32 hex chars: ");
     let nonce_hex = read_line("Nonce hex, 16 bytes / 32 hex chars: ");
-    let ad_hex = read_line("AD hex, can be empty: ");
     let ct_hex = read_line("Ciphertext hex, without tag: ");
     let tag_hex = read_line("Tag hex, 16 bytes / 32 hex chars: ");
 
@@ -139,7 +155,7 @@ fn run_custom_decrypt() {
         }
     };
 
-    let ad = match parse_hex(&ad_hex) {
+    let ad = match read_bytes_input("AD") {
         Ok(v) => v,
         Err(e) => {
             println!("Invalid AD: {e}");
@@ -243,5 +259,81 @@ fn print_hex(bytes: &[u8]) {
 fn print_hex_no_newline(bytes: &[u8]) {
     for byte in bytes {
         print!("{:02x}", byte);
+    }
+}
+
+fn run_hash_menu() {
+    println!("\nASCON-Hash256 Demo");
+    println!("1) Default hash demo");
+    println!("2) Hash custom message");
+
+    let choice = read_line("Select option: ");
+
+    match choice.trim() {
+        "1" => run_default_hash_demo(),
+        "2" => run_custom_hash(),
+        _ => println!("Invalid option."),
+    }
+}
+
+fn run_default_hash_demo() {
+    let message = b"Hello, Ascon-Hash256!";
+    let digest = hash::hash256(message);
+
+    println!("\nMessage:");
+    println!("{}", String::from_utf8_lossy(message));
+
+    println!("\nDigest:");
+    print_hex(&digest);
+}
+
+fn run_custom_hash() {
+    let message = match read_bytes_input("Message") {
+        Ok(v) => v,
+        Err(e) => {
+            println!("Invalid message: {e}");
+            return;
+        }
+    };
+
+    let digest = hash::hash256(&message);
+
+    println!("\nMessage hex:");
+    print_hex(&message);
+
+    println!("\nMessage as UTF-8, if readable:");
+    println!("{}", String::from_utf8_lossy(&message));
+
+    println!("\nDigest:");
+    print_hex(&digest);
+}
+
+fn run_xof_todo() {
+    println!("\nASCON-XOF128 is not implemented yet.");
+    println!("TODO: implement xof128_into(message, output).");
+}
+
+fn run_cxof_todo() {
+    println!("\nASCON-CXOF128 is not implemented yet.");
+    println!("TODO: implement cxof128_into(customization, message, output).");
+}
+
+fn read_bytes_input(name: &str) -> Result<Vec<u8>, String> {
+    println!("\n{name} input format:");
+    println!("1) Text / UTF-8");
+    println!("2) Hex");
+
+    let choice = read_line("Select format: ");
+
+    match choice.trim() {
+        "1" => {
+            let text = read_line(&format!("{name} text, can be empty: "));
+            Ok(text.into_bytes())
+        }
+        "2" => {
+            let hex = read_line(&format!("{name} hex, can be empty: "));
+            parse_hex(&hex)
+        }
+        _ => Err("invalid input format".to_string()),
     }
 }
