@@ -23,10 +23,10 @@ Implemented:
 * Caller-provided input/output buffers with no heap allocation in the core AEAD API
 * Encryption and decryption checked against known-answer test vectors
 * Interactive demo binary for default and custom hex-based encryption/decryption tests
+* Ascon-Hash256
 
 Not implemented yet:
 
-* Ascon-Hash256
 * Ascon-XOF128
 * Extended test suite
 * External security audit
