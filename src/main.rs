@@ -16,7 +16,7 @@ fn main() {
     match choice.trim() {
         "1" => run_aead_menu(),
         "2" => run_hash_menu(),
-        "3" => run_xof_todo(),
+        "3" => run_xof_menu(),
         "4" => run_cxof_todo(),
         _ => println!("Invalid option."),
     }
@@ -308,9 +308,70 @@ fn run_custom_hash() {
     print_hex(&digest);
 }
 
-fn run_xof_todo() {
-    println!("\nASCON-XOF128 is not implemented yet.");
-    println!("TODO: implement xof128_into(message, output).");
+fn run_xof_menu() {
+    println!("\nASCON-XOF128 Demo");
+    println!("1) Default XOF demo");
+    println!("2) XOF custom message");
+
+    let choice = read_line("Select option: ");
+
+    match choice.trim() {
+        "1" => run_default_xof_demo(),
+        "2" => run_custom_xof(),
+        _ => println!("Invalid option."),
+    }
+}
+
+fn run_default_xof_demo() {
+    let message = b"Hello, Ascon-XOF128!";
+    let mut output = [0u8; 32];
+
+    hash::xof128(message, &mut output);
+
+    println!("\nMessage:");
+    println!("{}", String::from_utf8_lossy(message));
+
+    println!("\nOutput length: {} bytes", output.len());
+
+    println!("\nXOF output:");
+    print_hex(&output);
+}
+
+fn run_custom_xof() {
+    let message = match read_bytes_input("Message") {
+        Ok(v) => v,
+        Err(e) => {
+            println!("Invalid message: {e}");
+            return;
+        }
+    };
+
+    let output_len_input = read_line("Output length in bytes: ");
+
+    let output_len: usize = match output_len_input.parse() {
+        Ok(v) => v,
+        Err(_) => {
+            println!("Invalid output length.");
+            return;
+        }
+    };
+
+    let mut output = vec![0u8; output_len];
+
+    hash::xof128(&message, &mut output);
+
+    println!("\nMessage length: {} bytes", message.len());
+
+    println!("\nMessage hex:");
+    print_hex(&message);
+
+    println!("\nMessage as UTF-8, if readable:");
+    println!("{}", String::from_utf8_lossy(&message));
+
+    println!("\nOutput length: {} bytes", output.len());
+
+    println!("\nXOF output:");
+    print_hex(&output);
 }
 
 fn run_cxof_todo() {

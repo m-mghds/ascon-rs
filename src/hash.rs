@@ -2,20 +2,38 @@ use crate::permutation::p12;
 use crate::state::State;
 
 const HASH_RATE: usize = 8;
-const IV: u64 = 0x0000_0801_00cc_0002;
+const ASCON_HASH256_IV: u64 = 0x0000_0801_00cc_0002;
+const ASCON_XOF128_IV: u64 = 0x0000_0800_00cc_0003;
 
+//Ascon-hash256
 pub fn hash256(message: &[u8]) -> [u8; 32] {
     let mut state = init_hash256_state();
 
     absorb_message(&mut state, message);
 
-    squeeze_hash256(&mut state)
+    let mut digest = [0u8; 32];
+    squeeze(&mut state, &mut digest);
+
+    digest
+}
+
+//Ascon-XOF128
+pub fn xof128(message: &[u8], output: &mut [u8]) {
+    let mut state = init_state(ASCON_XOF128_IV);
+
+    absorb_message(&mut state, message);
+
+    squeeze(&mut state, output);
+}
+
+fn init_state(iv: u64) -> State {
+    let mut state = State::from_words(iv, 0, 0, 0, 0);
+    p12(&mut state);
+    state
 }
 
 fn init_hash256_state() -> State {
-    let mut state = State::from_words(IV, 0, 0, 0, 0);
-    p12(&mut state);
-    state
+    init_state(ASCON_HASH256_IV)
 }
 
 fn absorb_message(state: &mut State, message: &[u8]) {
@@ -34,19 +52,22 @@ fn absorb_message(state: &mut State, message: &[u8]) {
     p12(state);
 }
 
-fn squeeze_hash256(state: &mut State) -> [u8; 32] {
-    let mut digest = [0u8; 32];
+fn squeeze(state: &mut State, output: &mut [u8]) {
+    let mut offset = 0;
 
-    for i in 0..4 {
+    while offset < output.len() {
         let block = state.word()[0].to_le_bytes();
-        digest[i * 8..(i + 1) * 8].copy_from_slice(&block);
 
-        if i != 3 {
+        let remaining = output.len() - offset;
+        let take = remaining.min(HASH_RATE);
+
+        output[offset..offset + take].copy_from_slice(&block[..take]);
+        offset += take;
+
+        if offset < output.len() {
             p12(state);
         }
     }
-
-    digest
 }
 
 fn load_u64_le(bytes: &[u8]) -> u64 {
