@@ -4,10 +4,12 @@ use crate::key::Key;
 use crate::permutation;
 use crate::state::State;
 
+use zeroize::Zeroize;
+
 const IV: u64 = 0x0000_1000_808c_0001;
 
 pub fn initialize(key: &Key, nonce: &[u8; 16]) -> State {
-    let k = key.words();
+    let mut k = key.words();
     let n = [
         u64::from_le_bytes(nonce[0..8].try_into().unwrap()),
         u64::from_le_bytes(nonce[8..16].try_into().unwrap()),
@@ -23,6 +25,8 @@ pub fn initialize(key: &Key, nonce: &[u8; 16]) -> State {
     let s = state.word_mut();
     s[3] ^= k[0];
     s[4] ^= k[1];
+
+    k.zeroize();
 
     state
 }

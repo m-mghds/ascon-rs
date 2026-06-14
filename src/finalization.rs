@@ -2,8 +2,10 @@ use crate::key::Key;
 use crate::permutation;
 use crate::state::State;
 
+use zeroize::Zeroize;
+
 pub fn finalize(state: &mut State, key: &Key) -> [u8; 16] {
-    let k = key.words();
+    let mut k = key.words();
 
     // First key injection before final permutation:
     // S2 ^= K0
@@ -28,6 +30,8 @@ pub fn finalize(state: &mut State, key: &Key) -> [u8; 16] {
 
         tag[0..8].copy_from_slice(&s[3].to_le_bytes());
         tag[8..16].copy_from_slice(&s[4].to_le_bytes());
+
+        k.zeroize();
 
         tag
     }

@@ -1,5 +1,7 @@
 use core::convert::TryInto;
 
+use zeroize::Zeroize;
+
 use crate::finalization;
 use crate::initialization;
 use crate::key::Key;
@@ -193,15 +195,17 @@ pub fn decrypt(
 
     decrypt_ciphertext(&mut state, ciphertext, plaintext);
 
-    let computed_tag = finalization::finalize(&mut state, key);
+    let mut computed_tag = finalization::finalize(&mut state, key);
 
-    if constant_time_eq_16(&computed_tag, tag) {
+    let tag_is_valid = constant_time_eq_16(&computed_tag, tag);
+
+    computed_tag.zeroize();
+
+    if tag_is_valid {
         Ok(())
     } else {
         // The plaintext is not authenticated!!
-        for byte in plaintext.iter_mut() {
-            *byte = 0;
-        }
+        plaintext.zeroize();
         Err(Error::AuthenticationFailed)
     }
 }

@@ -9,3 +9,4 @@ keywords = ["ascon", "aead", "cryptography", "no-std", "embedded"]
 categories = ["cryptography", "no-std"]
 
 [dependencies]
+zeroize = { version = "1.9", default-features = false }

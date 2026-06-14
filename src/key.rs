@@ -1,6 +1,8 @@
 use core::convert::TryInto;
 use core::fmt;
 
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 #[derive(Clone, PartialEq, Eq)]
 pub struct Key {
     bytes: [u8; 16],
@@ -23,7 +25,20 @@ impl Key {
     }
 }
 
-// real key should not be printed, this is just for testing purposes
+impl Zeroize for Key {
+    fn zeroize(&mut self) {
+        self.bytes.zeroize();
+    }
+}
+
+impl Drop for Key {
+    fn drop(&mut self) {
+        self.zeroize();
+    }
+}
+
+impl ZeroizeOnDrop for Key {}
+
 impl fmt::Debug for Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("Key(<redacted>)")
